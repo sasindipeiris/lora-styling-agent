@@ -7,6 +7,7 @@ import math
 import torch
 from peft import LoraConfig, get_peft_model
 from transformers import Trainer, TrainingArguments, set_seed
+from transformers.trainer_utils import get_last_checkpoint
 
 from .constants import ASSISTANT_RE, TOOL_SCHEMAS
 from .utils import CFG, DATA_DIR, OUT_DIR, load_base, read_jsonl, system_prompt
@@ -60,11 +61,17 @@ def main():
             num_train_epochs=t["epochs"], learning_rate=t["lr"], lr_scheduler_type="cosine",
             warmup_steps=int(t["warmup_ratio"] * steps), per_device_train_batch_size=t["batch_size"],
             per_device_eval_batch_size=t["batch_size"], gradient_accumulation_steps=t["grad_accum"],
-            fp16=CFG["model"]["dtype"] == "float16", eval_strategy="epoch", save_strategy="epoch",
-            save_total_limit=1, logging_steps=10, remove_unused_columns=False, label_names=["labels"],
-            gradient_checkpointing=True, gradient_checkpointing_kwargs={"use_reentrant": False},
-            prediction_loss_only=True))
-    trainer.train()
+            fp16=CFG["model"]["dtype"] == "float16", eval_strategy="epoch", save_strategy="steps",
+            save_steps=50, save_total_limit=1, logging_steps=10, remove_unused_columns=False,
+            label_names=["labels"], gradient_checkpointing=True,
+            gradient_checkpointing_kwargs={"use_reentrant": False}, prediction_loss_only=True))
+
+    # resume after a disconnect: pick up the latest checkpoint in run_dir/checkpoints if one exists
+    ckpt_dir = run_dir / "checkpoints"
+    last = get_last_checkpoint(str(ckpt_dir)) if ckpt_dir.is_dir() else None
+    if last:
+        print(f"resuming from {last}")
+    trainer.train(resume_from_checkpoint=last)
 
     model.save_pretrained(run_dir / "adapter")
     (run_dir / "train_log.json").write_text(json.dumps(trainer.state.log_history, indent=2))
