@@ -9,7 +9,9 @@ from .utils import load_model
 
 def show(step):
     for call, result in zip(step["calls"], step["results"]):
-        print(f"  -> {call['name']}({json.dumps(call['arguments'])})\n  <- {json.dumps(result)}")
+        print(
+            f"  -> {call['name']}({json.dumps(call['arguments'])})\n  <- {json.dumps(result)}"
+        )
     for call in step["calls"]:
         if "invalid" in call:
             print(f"  !! unparseable tool call: {call['invalid'][:200]}")
@@ -24,7 +26,9 @@ def main():
         if text == "/reset":
             history = []
         elif text:
-            out = run_agent(model, tok, [*history, {"role": "user", "content": text}], on_step=show)
+            out = run_agent(
+                model, tok, [*history, {"role": "user", "content": text}], on_step=show
+            )
             if out["stopped"] == "answer":
                 history = out["messages"]
             print(f"\nstylist> {out['final'] or '(stopped: ' + out['stopped'] + ')'}")

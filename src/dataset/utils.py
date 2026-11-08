@@ -11,7 +11,11 @@ from .constants import DAY_WORDS, ERROR_P, TIME_WORDS
 
 def search_args(req, category):
     """Correct search_wardrobe arguments for one category under these requirements."""
-    args = {"category": category, "min_formality": req["min_formality"], "max_formality": req["max_formality"]}
+    args = {
+        "category": category,
+        "min_formality": req["min_formality"],
+        "max_formality": req["max_formality"],
+    }
     if req["rules"]:
         args["rules"] = req["rules"]
     if category == "outerwear":
@@ -26,23 +30,43 @@ def search_args(req, category):
 def outfit_options(venue, event_type, day, time_of_day):
     """Returns (req, [(categories, passing combos, color-only-failing combos) per feasible style])."""
     req = requirements(venue, event_type, day, time_of_day)
-    extra = ("shoes",) + (("outerwear",) if req["needs_warm_layer"] or req["needs_waterproof"] else ())
+    extra = ("shoes",) + (
+        ("outerwear",) if req["needs_warm_layer"] or req["needs_waterproof"] else ()
+    )
     options = []
     for style in (("dress",), ("traditional",), ("top", "bottom")):
         cats = style + extra
-        pools = [[it["id"] for it in search_wardrobe(**search_args(req, c))["items"]] for c in cats]
-        checked = [(list(c), check_outfit(list(c), venue, event_type, day, time_of_day)["failed"])
-                   for c in itertools.product(*pools)]
+        pools = [
+            [it["id"] for it in search_wardrobe(**search_args(req, c))["items"]]
+            for c in cats
+        ]
+        checked = [
+            (
+                list(c),
+                check_outfit(list(c), venue, event_type, day, time_of_day)["failed"],
+            )
+            for c in itertools.product(*pools)
+        ]
         good = [c for c, failed in checked if not failed]
         if good:
-            options.append((cats, good, [c for c, failed in checked if failed == ["colors"]]))
+            options.append(
+                (cats, good, [c for c, failed in checked if failed == ["colors"]])
+            )
     return req, options
 
 
 def add_call(msgs, name, args, train=True):
     """Append a tool call and its real result. train=False keeps the call out of the loss."""
-    msgs.append({"role": "assistant", "content": "", "train": train,
-                 "tool_calls": [{"type": "function", "function": {"name": name, "arguments": args}}]})
+    msgs.append(
+        {
+            "role": "assistant",
+            "content": "",
+            "train": train,
+            "tool_calls": [
+                {"type": "function", "function": {"name": name, "arguments": args}}
+            ],
+        }
+    )
     result = call_tool(name, args)
     msgs.append({"role": "tool", "content": json.dumps(result)})
     return result
@@ -59,9 +83,21 @@ def venue_lookup(msgs, venue, event, said, rng):
 
 def record(kind, msgs, final, context=None, keys=(), key_mode="all", reject=()):
     msgs.append({"role": "assistant", "content": final})
-    return {"kind": kind, "user": msgs[0]["content"], "context": context,
-            "gold_calls": [tc["function"] for m in msgs if m.get("train", True) for tc in m.get("tool_calls", [])],
-            "answer_keys": list(keys), "key_mode": key_mode, "reject_keys": list(reject), "messages": msgs}
+    return {
+        "kind": kind,
+        "user": msgs[0]["content"],
+        "context": context,
+        "gold_calls": [
+            tc["function"]
+            for m in msgs
+            if m.get("train", True)
+            for tc in m.get("tool_calls", [])
+        ],
+        "answer_keys": list(keys),
+        "key_mode": key_mode,
+        "reject_keys": list(reject),
+        "messages": msgs,
+    }
 
 
 def phrase(xs, split):
@@ -69,7 +105,11 @@ def phrase(xs, split):
 
 
 def venue_mention(v, split, rng):
-    return rng.choice([v["name"], v["aliases"][0]] if split == "train" else [v["name"], *v["aliases"][1:]])
+    return rng.choice(
+        [v["name"], v["aliases"][0]]
+        if split == "train"
+        else [v["name"], *v["aliases"][1:]]
+    )
 
 
 def when_words(day, time, split, rng):

@@ -1,7 +1,15 @@
 import re
 from pathlib import Path
 
-from .dataset.constants import CATEGORIES, CLIMATE, DAYS, EVENTS, RULES, THRESHOLDS, TIMES
+from .dataset.constants import (
+    CATEGORIES,
+    CLIMATE,
+    DAYS,
+    EVENTS,
+    RULES,
+    THRESHOLDS,
+    TIMES,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_RESULTS = 5
@@ -25,31 +33,70 @@ Formality scale: 1 casual, 2 smart casual, 3 smart, 4 formal, 5 black tie."""
 
 
 def _fn(name, description, properties, required):
-    return {"type": "function", "function": {"name": name, "description": description, "parameters": {
-        "type": "object", "properties": properties, "required": required}}}
+    return {
+        "type": "function",
+        "function": {
+            "name": name,
+            "description": description,
+            "parameters": {
+                "type": "object",
+                "properties": properties,
+                "required": required,
+            },
+        },
+    }
 
 
 TOOL_SCHEMAS = [
-    _fn("get_venue_info", "Look up a venue's city, setting, required formality range and dress rules for an event.",
-        {"venue": {"type": "string", "description": "Venue name, e.g. 'Galle Face Hotel'"},
-         "event_type": {"type": "string", "enum": list(EVENTS)}},
-        ["venue", "event_type"]),
-    _fn("get_weather", "Get the forecast temperature (C) and rain chance (%) for a city, day and time of day this week.",
-        {"city": {"type": "string", "enum": list(CLIMATE)},
-         "day": {"type": "string", "enum": DAYS},
-         "time_of_day": {"type": "string", "enum": TIMES}},
-        ["city", "day", "time_of_day"]),
-    _fn("search_wardrobe", "Search the user's wardrobe for one category. Returns at most 5 matching items.",
-        {"category": {"type": "string", "enum": CATEGORIES},
-         "min_formality": {"type": "integer", "minimum": 1, "maximum": 5},
-         "max_formality": {"type": "integer", "minimum": 1, "maximum": 5},
-         "rules": {"type": "array", "items": {"type": "string", "enum": list(RULES)},
-                   "description": "Dress rules from get_venue_info; items breaking them are excluded"},
-         "waterproof": {"type": "boolean", "description": "Only waterproof items"},
-         "min_warmth": {"type": "integer", "minimum": 1, "maximum": 3}},
-        ["category", "min_formality"]),
-    _fn("check_color_harmony", "Check whether the colors of the chosen items work together.",
-        {"item_ids": {"type": "array", "items": {"type": "string"},
-                      "description": "Wardrobe item ids, e.g. ['D06', 'S01']"}},
-        ["item_ids"]),
+    _fn(
+        "get_venue_info",
+        "Look up a venue's city, setting, required formality range and dress rules for an event.",
+        {
+            "venue": {
+                "type": "string",
+                "description": "Venue name, e.g. 'Galle Face Hotel'",
+            },
+            "event_type": {"type": "string", "enum": list(EVENTS)},
+        },
+        ["venue", "event_type"],
+    ),
+    _fn(
+        "get_weather",
+        "Get the forecast temperature (C) and rain chance (%) for a city, day and time of day this week.",
+        {
+            "city": {"type": "string", "enum": list(CLIMATE)},
+            "day": {"type": "string", "enum": DAYS},
+            "time_of_day": {"type": "string", "enum": TIMES},
+        },
+        ["city", "day", "time_of_day"],
+    ),
+    _fn(
+        "search_wardrobe",
+        "Search the user's wardrobe for one category. Returns at most 5 matching items.",
+        {
+            "category": {"type": "string", "enum": CATEGORIES},
+            "min_formality": {"type": "integer", "minimum": 1, "maximum": 5},
+            "max_formality": {"type": "integer", "minimum": 1, "maximum": 5},
+            "rules": {
+                "type": "array",
+                "items": {"type": "string", "enum": list(RULES)},
+                "description": "Dress rules from get_venue_info; items breaking them are excluded",
+            },
+            "waterproof": {"type": "boolean", "description": "Only waterproof items"},
+            "min_warmth": {"type": "integer", "minimum": 1, "maximum": 3},
+        },
+        ["category", "min_formality"],
+    ),
+    _fn(
+        "check_color_harmony",
+        "Check whether the colors of the chosen items work together.",
+        {
+            "item_ids": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Wardrobe item ids, e.g. ['D06', 'S01']",
+            }
+        },
+        ["item_ids"],
+    ),
 ]

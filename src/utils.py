@@ -21,7 +21,9 @@ def system_prompt():
 
 
 def read_jsonl(path):
-    return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
+    return [
+        json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()
+    ]
 
 
 def write_jsonl(path, rows):
@@ -36,7 +38,9 @@ def load_base():
 
     name, dtype = CFG["model"]["name"], getattr(torch, CFG["model"]["dtype"])
     key = "dtype" if int(transformers.__version__.split(".")[0]) >= 5 else "torch_dtype"
-    return AutoModelForCausalLM.from_pretrained(name, **{key: dtype}), AutoTokenizer.from_pretrained(name)
+    return AutoModelForCausalLM.from_pretrained(
+        name, **{key: dtype}
+    ), AutoTokenizer.from_pretrained(name)
 
 
 def load_model(tag=None):
@@ -47,6 +51,9 @@ def load_model(tag=None):
     adapter = OUT_DIR / tag / "adapter" if tag else None
     if adapter and adapter.exists():
         from peft import PeftModel
+
         model = PeftModel.from_pretrained(model, str(adapter)).merge_and_unload()
-    print(f"loaded {CFG['model']['name']} + {adapter if adapter and adapter.exists() else 'no adapter'}")
+    print(
+        f"loaded {CFG['model']['name']} + {adapter if adapter and adapter.exists() else 'no adapter'}"
+    )
     return model.to("cuda" if torch.cuda.is_available() else "cpu").eval(), tok

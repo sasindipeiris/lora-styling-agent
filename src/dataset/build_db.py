@@ -6,8 +6,18 @@ from datetime import date, timedelta
 
 from ..constants import ROOT
 from ..utils import CFG
-from .constants import (CLIMATE, COLOR_RULES, DAYS, EVENTS, PINNED, RULES, THRESHOLDS, TIMES,
-                        VENUES, WARDROBE)
+from .constants import (
+    CLIMATE,
+    COLOR_RULES,
+    DAYS,
+    EVENTS,
+    PINNED,
+    RULES,
+    THRESHOLDS,
+    TIMES,
+    VENUES,
+    WARDROBE,
+)
 
 
 def build_weather(rng):
@@ -15,10 +25,18 @@ def build_weather(rng):
         temps, rains = CLIMATE[city]
         temp = temps[i] + rng.randint(-2, 2)
         rain = max(0, min(95, 5 * round((rains[i] + rng.randint(-25, 25)) / 5)))
-        return {"temp_c": temp, "rain_pct": rain, **PINNED.get((city, day, TIMES[i]), {})}
+        return {
+            "temp_c": temp,
+            "rain_pct": rain,
+            **PINNED.get((city, day, TIMES[i]), {}),
+        }
 
-    return {city: {day: {t: entry(city, day, i) for i, t in enumerate(TIMES)} for day in DAYS}
-            for city in CLIMATE}
+    return {
+        city: {
+            day: {t: entry(city, day, i) for i, t in enumerate(TIMES)} for day in DAYS
+        }
+        for city in CLIMATE
+    }
 
 
 def check_integrity(db):
@@ -36,7 +54,9 @@ def main():
 
     db = {
         "today": CFG["today"],
-        "days": {d: (today + timedelta(days=i)).isoformat() for i, d in enumerate(DAYS)},
+        "days": {
+            d: (today + timedelta(days=i)).isoformat() for i, d in enumerate(DAYS)
+        },
         "thresholds": THRESHOLDS,
         "rules": RULES,
         "events": EVENTS,
@@ -50,7 +70,9 @@ def main():
     out = ROOT / CFG["paths"]["db"]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(db, indent=2))
-    print(f"wrote {out}: {len(VENUES)} venues, {len(EVENTS)} events, {len(WARDROBE)} items")
+    print(
+        f"wrote {out}: {len(VENUES)} venues, {len(EVENTS)} events, {len(WARDROBE)} items"
+    )
 
 
 if __name__ == "__main__":
