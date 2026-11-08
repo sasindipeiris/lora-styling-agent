@@ -1,0 +1,33 @@
+seed: 42
+today: "2026-11-02"            # Monday; anchors "this Saturday", "tomorrow", ...
+
+model:
+  name: Qwen/Qwen2.5-0.5B-Instruct
+  dtype: float16               # fp16 so results match a Colab T4
+  max_new_tokens: 256
+  max_agent_steps: 10          # full outfit = venue, weather, <=4 searches, <=2 color checks, answer
+
+paths:
+  db: data/mock_db.json
+  data_dir: data               # train/val/test.jsonl
+  out_dir: outputs             
+
+data:
+  n_train: 1200
+  n_val: 100
+  n_test: 100
+  train_mix: {no_tool: 0.25, single_tool: 0.30, full_outfit: 0.45}
+  test_mix:  {no_tool: 0.30, single_tool: 0.30, full_outfit: 0.40}
+
+lora:
+  rank: 16                     # override with --rank 4; alpha is set to 2 * rank
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  lr: 2.0e-4
+  epochs: 2
+  batch_size: 2                # use 1 (and grad_accum 8) on a 16 GB T4
+  grad_accum: 4                # effective batch 8
+  max_len: 3072                # longest trace is ~2.8k tokens; keeps every example
+  warmup_ratio: 0.03
